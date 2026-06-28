@@ -1,0 +1,141 @@
+.setup-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.setup-header {
+  margin-bottom: 3rem;
+}
+
+.setup-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.type-card {
+  padding: 1.5rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.type-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.type-card.selected {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+}
+
+.type-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.type-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.type-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.resume-upload-section {
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.resume-upload-section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.resume-upload-section p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.upload-area {
+  margin-top: 1.5rem;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.upload-label:hover {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.upload-icon {
+  color: var(--primary-color);
+}
+
+.upload-label span {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.file-hint {
+  font-size: 0.85rem !important;
+  color: var(--text-secondary);
+}
+
+.start-btn {
+  padding: 16px 40px;
+  font-size: 1.2rem;
+  border-radius: 30px;
+}
+
+.start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.mt-4 {
+  margin-top: 2rem;
+}
