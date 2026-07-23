@@ -26,6 +26,7 @@ export const getUserProfile = async (uid) => {
 // Interview Sessions Service
 // ==========================================
 export const createInterviewSession = async (uid, interviewData) => {
+  // interviewData can include a 'mode' field (e.g., 'voice')
   const docRef = await addDoc(collection(db, 'interviews'), {
     ...interviewData,
     userId: uid,
@@ -33,6 +34,15 @@ export const createInterviewSession = async (uid, interviewData) => {
     status: 'in-progress'
   });
   return docRef.id;
+};
+
+// Save full transcript for voice interviews
+export const saveVoiceTranscript = async (sessionId, transcript) => {
+  const transcriptRef = collection(db, 'interviews', sessionId, 'transcripts');
+  await addDoc(transcriptRef, {
+    transcript,
+    createdAt: serverTimestamp()
+  });
 };
 
 export const updateInterviewSession = async (sessionId, data) => {
@@ -108,4 +118,96 @@ export const getUserResumeAnalyses = async (uid) => {
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+// ==========================================
+// Coach Session — Full Analytics Save
+// ==========================================
+/**
+ * Save a completed coach interview session with all 8-dimension analytics.
+ * Writes to: interviews (full data), scores (quick lookup), analytics (metrics only).
+ *
+ * @param {string} uid - Firebase user UID
+ * @param {Object} sessionData - Full session payload
+ * @param {string} sessionData.sessionId
+ * @param {string} sessionData.type - Interview type
+ * @param {Object[]} sessionData.messages - Chat history
+ * @param {Object} sessionData.geminiEvaluation - From /evaluate-coach endpoint
+ * @param {Object} sessionData.coachMetrics - 8-dimension computed scores
+ * @param {Object} sessionData.speechAnalytics - voiceService.getSpeechMetrics()
+ * @param {Object} sessionData.facialAnalytics - facialAnalysisService.getAnalyticsSummary()
+ * @returns {Promise<string>} - Firestore document ID
+ */
+export const saveCoachSession = async (uid, sessionData) => {
+  const {
+    sessionId,
+    type,
+    messages,
+    geminiEvaluation,
+    coachMetrics,
+    speechAnalytics,
+    facialAnalytics
+  } = sessionData;
+
+  const overallScore = coachMetrics?.overallPerformance ?? geminiEvaluation?.score ?? 70;
+
+  // Main interview document — full coach data
+  const interviewPayload = {
+    userId: uid,
+    sessionId,
+    type,
+    score: overallScore,
+    strengths: geminiEvaluation?.strengths ?? [],
+    weaknesses: geminiEvaluation?.weaknesses ?? [],
+    suggestions: geminiEvaluation?.suggestions ?? [],
+    summary: geminiEvaluation?.summary ?? '',
+    speechFeedback: geminiEvaluation?.speechFeedback ?? '',
+    facialFeedback: geminiEvaluation?.facialFeedback ?? '',
+    contentFeedback: geminiEvaluation?.contentFeedback ?? '',
+    messages: (messages || []).map(m => ({ sender: m.sender, text: m.text })),
+    coachMetrics: coachMetrics ?? {},
+    speechAnalytics: speechAnalytics ?? {},
+    facialAnalytics: facialAnalytics ?? {},
+    // Legacy metrics field for backward compatibility with Analytics page
+    metrics: {
+      confidence: coachMetrics?.confidence ?? 70,
+      clarity: coachMetrics?.communication ?? 70,
+      technicalAccuracy: coachMetrics?.technicalKnowledge ?? 70,
+      communication: coachMetrics?.communication ?? 70,
+      problemSolving: coachMetrics?.technicalKnowledge ?? 70,
+      eyeContact: coachMetrics?.eyeContact ?? 70,
+      speechFluency: coachMetrics?.speechFluency ?? 70,
+      facialExpressions: coachMetrics?.facialExpressions ?? 70,
+      professionalism: coachMetrics?.professionalism ?? 70,
+      overallPerformance: overallScore
+    },
+    date: serverTimestamp(),
+    completedAt: serverTimestamp()
+  };
+
+  const interviewRef = await addDoc(collection(db, 'interviews'), interviewPayload);
+
+  // Quick-lookup scores document
+  await addDoc(collection(db, 'scores'), {
+    userId: uid,
+    interviewId: interviewRef.id,
+    sessionId,
+    score: overallScore,
+    type,
+    date: serverTimestamp()
+  });
+
+  // Dedicated analytics document for charts / trend analysis
+  await addDoc(collection(db, 'analytics'), {
+    userId: uid,
+    interviewId: interviewRef.id,
+    sessionId,
+    type,
+    coachMetrics: coachMetrics ?? {},
+    speechAnalytics: speechAnalytics ?? {},
+    facialAnalytics: facialAnalytics ?? {},
+    date: serverTimestamp()
+  });
+
+  return interviewRef.id;
 };

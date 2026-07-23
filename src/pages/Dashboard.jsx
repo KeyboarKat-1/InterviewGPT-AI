@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { FiPlayCircle, FiBarChart2, FiClock, FiFileText } from 'react-icons/fi';
+import { FiPlayCircle, FiBarChart2, FiClock, FiFileText, FiMic } from 'react-icons/fi';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -16,27 +16,72 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         if (currentUser) {
-          // Fetch user profile stats
-          const userRef = doc(db, 'users', currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            setUserData(userSnap.data());
+          // Fetch from local storage first
+          const localInterviews = JSON.parse(localStorage.getItem('localInterviews') || '[]');
+          let interviews = [...localInterviews];
+          
+          if (!currentUser.isGuest) {
+            try {
+              // Fetch user profile stats
+              const userRef = doc(db, 'users', currentUser.uid);
+              const userSnap = await getDoc(userRef);
+              if (userSnap.exists()) {
+                setUserData(userSnap.data());
+              }
+
+              // Fetch recent interviews from Firestore
+              const interviewsRef = collection(db, 'interviews');
+              const q = query(
+                interviewsRef, 
+                where('userId', '==', currentUser.uid),
+                orderBy('date', 'desc'),
+                limit(3)
+              );
+              const querySnapshot = await getDocs(q);
+              const firestoreInterviews = [];
+              querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                firestoreInterviews.push({ 
+                  id: doc.id, 
+                  ...data,
+                  date: data.date
+                });
+              });
+
+              // Merge lists and prevent duplicates
+              const localSessionIds = new Set(interviews.map(i => i.sessionId));
+              firestoreInterviews.forEach(item => {
+                if (!localSessionIds.has(item.sessionId)) {
+                  interviews.push(item);
+                }
+              });
+            } catch (dbError) {
+              console.warn("Firestore fetch failed in dashboard:", dbError);
+            }
           }
 
-          // Fetch recent interviews (Mocking the fetching logic)
-          const interviewsRef = collection(db, 'interviews');
-          const q = query(
-            interviewsRef, 
-            where('userId', '==', currentUser.uid),
-            orderBy('date', 'desc'),
-            limit(3)
-          );
-          const querySnapshot = await getDocs(q);
-          const interviews = [];
-          querySnapshot.forEach((doc) => {
-            interviews.push({ id: doc.id, ...doc.data() });
+          // Format dates and sort by date descending
+          interviews.forEach(item => {
+            if (item.date && typeof item.date.toDate === 'function') {
+              item.dateObj = item.date.toDate();
+            } else {
+              item.dateObj = new Date(item.date);
+            }
           });
-          setRecentInterviews(interviews);
+          interviews.sort((a, b) => b.dateObj - a.dateObj);
+          
+          setRecentInterviews(interviews.slice(0, 3));
+
+          // Set user statistics for local storage/guest mode
+          if (currentUser.isGuest || !userData) {
+            const totalScore = interviews.reduce((acc, curr) => acc + (curr.score || 0), 0);
+            const avg = interviews.length > 0 ? Math.round(totalScore / interviews.length) : 0;
+            setUserData({
+              displayName: currentUser.displayName,
+              totalInterviews: interviews.length,
+              averageScore: avg
+            });
+          }
         }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -46,6 +91,13 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [currentUser]);
+
+  const getFormattedDate = (interview) => {
+    if (interview.date?.toDate) {
+      return interview.date.toDate().toLocaleDateString();
+    }
+    return new Date(interview.date).toLocaleDateString();
+  };
 
   if (loading) {
     return <div className="dashboard-loading">Loading your personalized dashboard...</div>;
@@ -95,11 +147,14 @@ const Dashboard = () => {
                 <li key={interview.id} className="interview-item">
                   <div className="interview-details">
                     <span className="interview-type">{interview.type}</span>
-                    <span className="interview-date">{new Date(interview.date?.toDate()).toLocaleDateString()}</span>
+                    <span className="interview-date">{getFormattedDate(interview)}</span>
                   </div>
                   <div className="interview-score">
                     Score: <strong>{interview.score}%</strong>
                   </div>
+                  <Link to={`/interview/results/${interview.sessionId}`} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem', marginLeft: 'auto' }}>
+                    View
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -122,6 +177,9 @@ const Dashboard = () => {
             </Link>
             <Link to="/interview/setup?type=Resume" className="action-btn special-btn">
               <FiFileText /> Upload Resume
+            </Link>
+            <Link to="/interview/voice" className="action-btn voice-btn">
+              <FiMic /> Voice Interview
             </Link>
           </div>
         </div>

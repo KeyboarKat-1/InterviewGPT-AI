@@ -9,7 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signInWithGoogle } = useAuth();
+  const { login, signInWithGoogle, loginAsGuest } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -37,6 +37,11 @@ const Login = () => {
     setLoading(false);
   };
 
+  const handleGuestSignIn = () => {
+    loginAsGuest();
+    navigate('/dashboard');
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card glass-panel">
@@ -48,6 +53,10 @@ const Login = () => {
         <button onClick={handleGoogleSignIn} disabled={loading} className="btn-google">
           <FcGoogle size={24} />
           Continue with Google
+        </button>
+
+        <button onClick={handleGuestSignIn} disabled={loading} className="btn-secondary" style={{ width: '100%', marginTop: '0.75rem', gap: '8px' }}>
+          Continue as Guest (Demo Mode)
         </button>
 
         <div className="auth-divider">

@@ -1,0 +1,199 @@
+.voice-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--surface-color, #1a1a2e);
+  border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+  border-radius: 16px;
+}
+
+/* Mode Tabs */
+.vc-mode-tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  padding: 4px;
+  border-radius: 10px;
+}
+.vc-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.vc-tab.active {
+  background: var(--primary-color, #6c63ff);
+  color: white;
+}
+
+/* Transcript */
+.vc-transcript {
+  min-height: 80px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary, #eee);
+}
+.vc-final { color: var(--text-primary, #eee); }
+.vc-interim { color: rgba(255,255,255,0.4); font-style: italic; }
+.vc-placeholder { color: rgba(255,255,255,0.3); font-style: italic; font-size: 0.9rem; }
+
+/* Metrics Bar */
+.vc-metrics-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.82rem;
+}
+.vc-metric {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary, #aaa);
+}
+.vc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.vc-dot.green { background: #22c55e; }
+.vc-dot.orange { background: #f59e0b; }
+
+/* Controls Row */
+.vc-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+}
+
+/* Mic Button */
+.vc-mic-btn {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary-color, #6c63ff);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.vc-mic-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(108,99,255,0.5);
+}
+.vc-mic-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.vc-mic-btn.listening {
+  background: #ef4444;
+  animation: pulse-mic 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-mic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+}
+
+/* Pulse rings */
+.vc-mic-rings { position: absolute; inset: 0; pointer-events: none; }
+.vc-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(239,68,68,0.4);
+  opacity: 0;
+}
+.listening .vc-ring { animation: ring-expand 1.8s ease-out infinite; }
+.vc-ring.r1 { inset: -8px; animation-delay: 0s; }
+.vc-ring.r2 { inset: -16px; animation-delay: 0.4s; }
+.vc-ring.r3 { inset: -24px; animation-delay: 0.8s; }
+
+@keyframes ring-expand {
+  0% { opacity: 0.6; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* Submit Button */
+.vc-submit-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6c63ff, #4f46e5);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.vc-submit-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.92; }
+.vc-submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Keyboard Panel */
+.vc-keyboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vc-keyboard-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--text-primary, #eee);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.vc-keyboard-input:focus { border-color: var(--primary-color, #6c63ff); }
+
+/* Permission Error */
+.vc-permission-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+.vc-permission-error button {
+  padding: 4px 12px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}

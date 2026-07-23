@@ -9,10 +9,9 @@ import Dashboard from './pages/Dashboard';
 import InterviewSetup from './pages/InterviewSetup';
 import InterviewSession from './pages/InterviewSession';
 import ProfileSettings from './pages/ProfileSettings';
-
-// Placeholder Pages
-const Analytics = () => <div style={{padding: '2rem', textAlign: 'center'}}><h1>Analytics Page Coming Soon</h1></div>;
-const Results = () => <div style={{padding: '2rem', textAlign: 'center'}}><h1>Interview Results</h1></div>;
+import Results from './pages/Results';
+import History from './pages/History';
+import Analytics from './pages/Analytics';
 
 // A wrapper for protected routes
 const PrivateRoute = ({ children }) => {
@@ -78,6 +77,22 @@ const AppContent = () => {
               element={
                 <PrivateRoute>
                   <Results />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/history" 
+              element={
+                <PrivateRoute>
+                  <History />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <PrivateRoute>
+                  <Analytics />
                 </PrivateRoute>
               } 
             />

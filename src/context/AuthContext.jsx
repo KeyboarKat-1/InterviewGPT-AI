@@ -94,21 +94,43 @@ export const AuthProvider = ({ children }) => {
 
   // Log out
   const logout = () => {
+    localStorage.removeItem('guestUser');
+    setCurrentUser(null);
     return signOut(auth);
+  };
+
+  const loginAsGuest = () => {
+    const guestUser = {
+      uid: 'guest_user',
+      displayName: 'Guest User',
+      email: 'guest@example.com',
+      isGuest: true
+    };
+    setCurrentUser(guestUser);
+    localStorage.setItem('guestUser', JSON.stringify(guestUser));
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Optionally fetch extra user data from Firestore here and merge with currentUser
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-           setCurrentUser({ ...user, ...userDoc.data() });
-        } else {
-           setCurrentUser(user);
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+             setCurrentUser({ ...user, ...userDoc.data() });
+          } else {
+             setCurrentUser(user);
+          }
+        } catch (error) {
+          console.warn("Firestore fetch failed, setting default user:", error);
+          setCurrentUser(user);
         }
       } else {
-        setCurrentUser(null);
+        const savedGuest = localStorage.getItem('guestUser');
+        if (savedGuest) {
+          setCurrentUser(JSON.parse(savedGuest));
+        } else {
+          setCurrentUser(null);
+        }
       }
       setLoading(false);
     });
@@ -123,7 +145,8 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     resetPassword,
     updateProfile,
-    logout
+    logout,
+    loginAsGuest
   };
 
   return (

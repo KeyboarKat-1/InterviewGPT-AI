@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiCode, FiUsers, FiBriefcase, FiCpu, FiFileText, FiUploadCloud } from 'react-icons/fi';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './InterviewSetup.css';
 
 const InterviewSetup = () => {
@@ -8,6 +9,8 @@ const InterviewSetup = () => {
   const location = useLocation();
   const [selectedType, setSelectedType] = useState('HR');
   const [resumeFile, setResumeFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Extract type from URL params if available
   useEffect(() => {
@@ -26,15 +29,53 @@ const InterviewSetup = () => {
     { id: 'Resume', title: 'Resume-Based', icon: <FiFileText />, desc: 'Upload your resume to get customized questions.' }
   ];
 
-  const handleStart = () => {
-    // Generate a unique ID for the session
-    const sessionId = Date.now().toString(36);
-    navigate(`/interview/session/${sessionId}?type=${selectedType}`);
+  const handleStart = async () => {
+    if (selectedType === 'Resume') {
+      if (!resumeFile) return;
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/resume/analyze`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Failed to analyze resume');
+        }
+        
+        const data = await response.json();
+        const sessionId = Date.now().toString(36);
+        
+        // Pass fullResumeText and parsing result to the session page
+        navigate(`/interview/session/${sessionId}?type=${selectedType}`, {
+          state: {
+            resumeText: data.fullResumeText,
+            resumeAnalysis: data
+          }
+        });
+      } catch (err) {
+        console.error("Resume analysis failed:", err);
+        setError(err.message || 'Failed to process resume. Please ensure it is a valid text-based PDF.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const sessionId = Date.now().toString(36);
+      navigate(`/interview/session/${sessionId}?type=${selectedType}`);
+    }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setResumeFile(e.target.files[0]);
+      setError(null);
     }
   };
 
@@ -74,9 +115,15 @@ const InterviewSetup = () => {
             <label htmlFor="resume-upload" className="upload-label">
               <FiUploadCloud size={48} className="upload-icon" />
               <span>{resumeFile ? resumeFile.name : 'Click to upload or drag and drop'}</span>
-              <span className="file-hint">PDF, DOC, DOCX (Max 5MB)</span>
+              <span className="file-hint">PDF (Max 5MB)</span>
             </label>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="setup-error-banner glass-panel" style={{ color: 'var(--danger-color)', padding: '1rem', marginTop: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)' }}>
+          {error}
         </div>
       )}
 
@@ -84,11 +131,18 @@ const InterviewSetup = () => {
         <button 
           className="btn-primary start-btn" 
           onClick={handleStart}
-          disabled={selectedType === 'Resume' && !resumeFile}
+          disabled={(selectedType === 'Resume' && !resumeFile) || loading}
         >
-          Start {selectedType} Interview
+          {loading ? 'Processing...' : `Start ${selectedType} Interview`}
         </button>
       </div>
+
+      {loading && (
+        <LoadingSpinner 
+          fullPage={true} 
+          message="Analyzing resume and generating custom interview questions..." 
+        />
+      )}
     </div>
   );
 };

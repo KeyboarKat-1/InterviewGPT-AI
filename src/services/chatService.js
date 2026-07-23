@@ -7,7 +7,7 @@ import api from './api';
 const geminiService = {
   /**
    * Initialize a new interview session with Gemini backend.
-   * @param {Object} payload - { userId, interviewType }
+   * @param {Object} payload - { userId, interviewType, questionCount, difficulty }
    * @returns {Promise<Object>} - Initial AI message and sessionId
    */
   initSession: async (payload) => {
@@ -17,7 +17,7 @@ const geminiService = {
 
   /**
    * Send a user answer to Gemini and receive the next question.
-   * @param {Object} payload - { sessionId, userId, interviewType, message, history }
+   * @param {Object} payload - { sessionId, userId, interviewType, message, history, questionNumber, totalQuestions }
    * @returns {Promise<Object>} - AI response containing next question.
    */
   sendMessage: async (payload) => {
@@ -32,6 +32,17 @@ const geminiService = {
    */
   evaluate: async (payload) => {
     const response = await api.post('/gemini/evaluate', payload);
+    return response;
+  },
+
+  /**
+   * Enhanced evaluation that incorporates real-time speech and facial analytics.
+   * Returns 8-dimension coach scores.
+   * @param {Object} payload - { interviewType, history, speechMetrics, facialAnalytics }
+   * @returns {Promise<Object>} - Comprehensive coach evaluation with 8-dimension metrics.
+   */
+  evaluateCoach: async (payload) => {
+    const response = await api.post('/gemini/evaluate-coach', payload);
     return response;
   }
 };
